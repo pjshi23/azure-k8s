@@ -1,0 +1,41 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: kube-apiserver
+  namespace: kube-system
+spec:
+  hostNetwork: true
+  containers:
+  - name: kube-apiserver
+    image: gcr.io/google_containers/hyperkube:v1.1.4
+    command:
+    - /hyperkube
+    - apiserver
+    - --service-account-key-file=/etc/kubernetes/auth/auth_service_account.key
+    - --admission_control=NamespaceLifecycle,NamespaceAutoProvision,LimitRanger,SecurityContextDeny,ServiceAccount,ResourceQuota
+    - --insecure-port=<%= kube_master_port %>
+    - --insecure-bind-address=0.0.0.0
+    - --secure-port=<%= kube_master_secure_port %>
+    - --bind-address=0.0.0.0
+    - --token-auth-file=/etc/kubernetes/auth/auth_token
+    - --authorization-mode=ABAC
+    - --authorization-policy-file=/etc/kubernetes/auth/auth_policy
+    - --kubelet_https=true
+    - --service-cluster-ip-range=<%= service_cidr %>
+    - --etcd_servers=http://127.0.0.1:2379
+    - --allow-privileged=true
+    ports:
+    - containerPort: <%= kube_master_secure_port %>
+      hostPort: <%= kube_master_secure_port %>
+      name: https
+    - containerPort: <%= kube_master_port %>
+      hostPort: <%= kube_master_port %>
+      name: local
+    volumeMounts:
+    - mountPath: /etc/kubernetes/auth
+      name: auth-config
+      readOnly: true
+  volumes:
+  - hostPath:
+      path: /etc/kubernetes/auth
+    name: auth-config

@@ -1,0 +1,112 @@
+
+coreos:
+  update:
+    reboot-strategy: off
+  etcd2:
+    name: etcdserver
+    advertise-client-urls: http://$private_ipv4:2379
+    initial-advertise-peer-urls: http://$private_ipv4:2380
+    listen-client-urls: http://0.0.0.0:2379
+    listen-peer-urls: http://$private_ipv4:2380
+    initial-cluster: etcdserver=http://$private_ipv4:2380
+  units:
+    - name: etcd2.service
+      command: start
+
+    - name: flanneld.service
+      command: start
+      drop-ins:
+        - name: 10-etcd.conf
+          content: |
+            [Unit]
+            Requires=etcd2.service
+            After=etcd2.service
+            [Service]
+            ExecStartPre=/usr/bin/etcdctl set /coreos.com/network/config \
+            '{ "Network": "<%= pod_cidr %>", "Backend": { "Type": "vxlan" } }'
+
+    - name: docker.service
+      command: start
+      drop-ins:
+        - name: 40-flannel.conf
+          content: |
+            [Unit]
+            Requires=flanneld.service
+            After=flanneld.service
+            Restart=always
+            Restart=on-failure
+
+    - name: kubelet.service
+      command: start
+      content: |
+        [Unit]
+        Description=Kubernetes Kubelet
+        Requires=etcd2.service flanneld.service docker.service
+        After=etcd2.service flanneld.service docker.service
+        [Service]
+        ExecStartPre=-/usr/bin/mkdir -p /opt/bin
+        ExecStartPre=/usr/bin/curl -L -o /opt/bin/kubelet \
+            https://storage.googleapis.com/kubernetes-release/release/v1.1.4/bin/linux/amd64/kubelet
+        ExecStartPre=/usr/bin/chmod +x /opt/bin/kubelet        
+        ExecStart=/opt/bin/kubelet \
+            --address=0.0.0.0 \
+            --port=10250 \
+            --hostname-override=%H \
+            --api-servers=http://127.0.0.1:<%= kube_master_port %> \
+            --logtostderr=true \
+            --cluster_dns=<%= dns_service_ip %> \
+            --cluster_domain=cluster.local \
+            --allow_privileged=true \
+            --config=/etc/kubernetes/manifests/
+        Restart=always
+        Restart=on-failure
+        RestartSec=10
+        [Install]
+        WantedBy=multi-user.target
+
+    - name: install-kube-system.service
+      command: start
+      content: |
+        [Unit]
+        Requires=kubelet.service docker.service
+        After=kubelet.service docker.service
+        [Service]
+        Type=simple
+        StartLimitInterval=0
+        Restart=on-failure
+        ExecStartPre=/usr/bin/curl http://127.0.0.1:<%= kube_master_port %>/version
+        ExecStart=/opt/bin/install-kube-system 
+
+
+write_files:
+  - path: /opt/bin/install-kube-system
+    permissions: '0700'
+    owner: root:root
+    content: |
+      #!/bin/bash -e
+      
+      for manifest in /etc/kubernetes/addons/*-ns.json;do
+          /usr/bin/curl -H "Content-Type: application/json" -XPOST \
+          -d @"$manifest" \
+          "http://127.0.0.1:<%= kube_master_port %>/api/v1/namespaces"
+      done
+      for manifest in /etc/kubernetes/addons/*-rc.json;do
+          /usr/bin/curl  -H "Content-Type: application/json" -XPOST \
+          -d @"$manifest" \
+          "http://127.0.0.1:<%= kube_master_port %>/api/v1/namespaces/kube-system/replicationcontrollers"
+      done
+      for manifest in /etc/kubernetes/addons/*-svc.json;do
+          /usr/bin/curl  -H "Content-Type: application/json" -XPOST \
+          -d @"$manifest" \
+          "http://127.0.0.1:<%= kube_master_port %>/api/v1/namespaces/kube-system/services"
+      done
+
+  - path: /etc/kubernetes/addons/kube-system-ns.json
+    content: |
+        {
+          "apiVersion": "v1",
+          "kind": "Namespace",
+          "metadata": {
+            "name": "kube-system"
+          }
+        }

@@ -1,0 +1,19 @@
+{
+  "name": "azure-k8s-coreos-flannel",
+  "version": "1.0.0",
+  "description": "Small utility to bring up a Kubernetes cluster with CoreOS and Flannel in Azure",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Origin by Ilya Dmitrichenko <errordeveloper@gmail.com>, Modified by Winston Li <winston_li@hotmail.com>",
+  "license": "Apache 2.0",
+  "dependencies": {
+    "azure-cli": "^0.9.9",
+    "colors": "^1.0.3",
+    "js-yaml": "^3.6.0",
+    "openssl-wrapper": "^0.2.1",
+    "underscore": "^1.7.0",
+    "underscore.string": "^3.0.2"
+  }
+}

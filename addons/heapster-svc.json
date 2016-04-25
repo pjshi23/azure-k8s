@@ -1,0 +1,23 @@
+{
+  "kind": "Service",
+  "apiVersion": "v1",
+  "metadata": {
+    "name": "heapster",
+    "namespace": "kube-system",
+    "labels": {
+      "kubernetes.io/cluster-service": "true",
+      "kubernetes.io/name": "Heapster"
+    }
+  },
+  "spec": {
+    "selector": {
+      "k8s-app": "heapster"
+    },
+    "ports": [
+      {
+        "port": 80,
+        "targetPort": 8082
+      }
+    ]
+  }
+}

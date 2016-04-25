@@ -1,0 +1,51 @@
+# some azure resources must be unique, simplify this via derived from unique cluster_name
+
+# common settings internally referred by resources and kubernetes
+commons:
+  cluster_name: k8s
+  master_ip: 192.168.0.4
+
+cluster_name: <%= cluster_name %>
+location: West US
+
+
+coreos_image_ids: 
+  stable: 2b171e93f07c4903bcad35bda10acf22__CoreOS-Stable-899.13.0 
+  beta: 2b171e93f07c4903bcad35bda10acf22__CoreOS-Beta-991.2.0
+  alpha: 2b171e93f07c4903bcad35bda10acf22__CoreOS-Alpha-1010.1.0
+  selected_channel: alpha
+
+nodes:
+  master: 1
+  worker: 3
+  master_instance_type: Medium 
+  worker_instance_type: Medium
+  starting_ssh_port: 2200  
+
+resources:
+  service_name: <%= cluster_name %>-service
+  vnet_name: <%= cluster_name %>-internal-vnet
+  vnet_address_space: "192.168.0.0"
+  vnet_cidr: 16
+  subnet_name: nodes
+  subnet_cidr: 24
+  master_hostname: <%= cluster_name %>-master-00
+  master_ip: <%= master_ip %>
+  expose_ports: 
+    - 3443
+    - 8080
+    - 3000
+    - 4040
+    - 6066
+  storage_account: <%= cluster_name %>storageaccount
+  
+# following settings are for kubernetes/coreos/flanneld system components  
+kubernetes:
+  version: v1.1.4
+  pod_cidr: 10.2.0.0/16
+  service_cidr: 10.3.0.0/24
+  dns_service_ip: 10.3.0.10
+  kube_master_hostname: <%= cluster_name %>-master-00
+  kube_master_ip: <%= master_ip %>
+  kube_master_port: 3080
+  kube_master_secure_port: 3443  
