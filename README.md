@@ -71,7 +71,7 @@ Note: The project is based on "https://github.com/kubernetes/kubernetes/tree/mas
             kube-system   kube-vulcand-rc-oqavt                   3/3       Running   0          17m
 
 
-### 4. Enable browsers to access Spark UI on Azure, add an entry to your DNS server
+### 6. Enable browsers to access Spark UI on Azure, add an entry to your DNS server
         Example:
         [winston@infra2 ~]$ sudo vi /etc/dnsmasq.d/lab504.conf
             address=/.k8s.azure/[Public IP of k8s-master-00]
@@ -119,7 +119,7 @@ Note: The project is based on "https://github.com/kubernetes/kubernetes/tree/mas
             k8s-worker-03   kubernetes.io/hostname=k8s-worker-03   Ready      6m
             k8s-worker-04   kubernetes.io/hostname=k8s-worker-04   NotReady   5m    
                 
-### 5. Shutdown the cluster:
+### 8. Shutdown the cluster:
         Winstonteki-MacBook-Air:azure-k8s Winston$ ./shutdown-cluster.js ./output/k8s_deployment.yaml 
        
         Winstonteki-MacBook-Air:azure-k8s Winston$ azure vm list
@@ -134,7 +134,7 @@ Note: The project is based on "https://github.com/kubernetes/kubernetes/tree/mas
             data:    k8s-worker-03  StoppedDeallocated  West US         k8s-service.cloudapp.net             
             info:    vm list command OK
         
-### 6. Startup the cluster:
+### 9. Startup the cluster:
         Winstonteki-MacBook-Air:azure-k8s Winston$ ./start-cluster.js ./output/k8s_deployment.yaml 
             azure_wrapper/info: Loaded state from `./output/k8s_deployment.yaml`
         
@@ -162,7 +162,7 @@ Note: The project is based on "https://github.com/kubernetes/kubernetes/tree/mas
             kube-system   kube-scheduler-k8s-master-00            1/1       Running       1          2h
             kube-system   kube-vulcand-rc-oqavt                   3/3       Running       3          2h
 
-### 6. Destroy the cluster:
+### 10. Destroy the cluster:
         Winstonteki-MacBook-Air:azure-k8s Winston$ ./destroy-cluster.js ./output/k8s_deployment.yaml 
             azure_wrapper/info: Loaded state from `./output/k8s_deployment.yaml`
 
@@ -171,7 +171,7 @@ Note: The project is based on "https://github.com/kubernetes/kubernetes/tree/mas
     1. Some modifications to be consistent with our lab deployment
         (1) deploy etcd2 together with kubernetes nodes & etcd2 master node collocates with kubernetes master node.
         (2) --cluster-domain=cluster.local (for kubelet service)
-        (3) add namespaces.yaml to /addons for creating namespaces (develop,staging, production)
+        (3) add additional namespaces (json files) to /addons for creating namespaces (develop,staging, production)
         (4) add kubeconfig related context,token,and policy to /auth
         (5) add kube-apiserver.yaml,kube-controller.yaml,kube-scheduler.yaml, and kube-proxy.yaml to /manifests 
         (6) set master node with static private IP address, because its IP changes will lead to etcd cluster malfunction.
