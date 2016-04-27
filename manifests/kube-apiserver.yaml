@@ -11,16 +11,18 @@ spec:
     command:
     - /hyperkube
     - apiserver
-    - --service-account-key-file=/etc/kubernetes/auth/auth_service_account.key
     - --admission_control=NamespaceLifecycle,NamespaceAutoProvision,LimitRanger,SecurityContextDeny,ServiceAccount,ResourceQuota
-    - --insecure-port=<%= kube_master_port %>
-    - --insecure-bind-address=0.0.0.0
-    - --secure-port=<%= kube_master_secure_port %>
-    - --bind-address=0.0.0.0
-    - --token-auth-file=/etc/kubernetes/auth/auth_token
+    - --tls-cert-file=/etc/kubernetes/ssl/apiserver.pem
+    - --tls-private-key-file=/etc/kubernetes/ssl/apiserver-key.pem
+    - --client-ca-file=/etc/kubernetes/ssl/ca.pem
+    - --service-account-key-file=/etc/kubernetes/ssl/apiserver-key.pem
     - --authorization-mode=ABAC
     - --authorization-policy-file=/etc/kubernetes/auth/auth_policy
-    - --kubelet_https=true
+    - --insecure-port=<%= kube_master_port %>
+    - --insecure-bind-address=127.0.0.1
+    - --secure-port=<%= kube_master_secure_port %>
+    - --bind-address=0.0.0.0
+    - --advertise-address=$private_ipv4
     - --service-cluster-ip-range=<%= service_cidr %>
     - --etcd_servers=http://127.0.0.1:2379
     - --allow-privileged=true
@@ -32,10 +34,22 @@ spec:
       hostPort: <%= kube_master_port %>
       name: local
     volumeMounts:
+    - mountPath: /etc/kubernetes/ssl
+      name: ssl-certs-kubernetes
+      readOnly: true
+    - mountPath: /etc/ssl/certs
+      name: ssl-certs-host
+      readOnly: true
     - mountPath: /etc/kubernetes/auth
       name: auth-config
       readOnly: true
   volumes:
+  - hostPath:
+      path: /etc/kubernetes/ssl
+    name: ssl-certs-kubernetes
+  - hostPath:
+      path: /usr/share/ca-certificates
+    name: ssl-certs-host
   - hostPath:
       path: /etc/kubernetes/auth
     name: auth-config

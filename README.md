@@ -34,8 +34,7 @@ Note: The project is based on "https://github.com/kubernetes/kubernetes/tree/mas
             azure_wrapper/info: Saved state into `./output/k8s_deployment.yaml`
 
 ###  5. Check cluster status
-    (1). download kubectl to your local machine
-    (2). copy auth/kube_config to ~/.kube/config, and modify its cluster endpoint, say "server: https://k8s-service.cloudapp.net:3443"
+    download kubectl to your local machine first
          
         Winstonteki-MacBook-Air:azure-k8s Winston$ kubectl version
             Client Version: version.Info{Major:"1", Minor:"1", GitVersion:"v1.1.7", GitCommit:"e4e6878293a339e4087dae684647c9e53f1cf9f0", GitTreeState:"clean"}
@@ -202,5 +201,5 @@ Note: The project is based on "https://github.com/kubernetes/kubernetes/tree/mas
         (1) Kubernetes security enhancement
         (2) Use Azure DNS server instead of Infra2@lab
         (3) Kubernetes master HA
-        (4) Azure Resource Manager and Scale Set
+        (4) Azure Resource Manager Template with Scale Set
         

@@ -31,7 +31,7 @@ coreos:
             Requires=flanneld.service
             After=flanneld.service
             Restart=always
-            Restart=on-failure
+            RestartSec=1
 
     - name: kubelet.service
       command: start
@@ -49,14 +49,16 @@ coreos:
             --address=0.0.0.0 \
             --port=10250 \
             --hostname-override=%H \
-            --api-servers=http://<%= kube_master_ip %>:<%= kube_master_port %> \
+            --api-servers=https://<%= kube_master_ip %>:<%= kube_master_secure_port %> \
             --logtostderr=true \
             --cluster_dns=<%= dns_service_ip %> \
             --cluster_domain=cluster.local \
             --allow_privileged=true \
-            --config=/etc/kubernetes/manifests/
+            --config=/etc/kubernetes/manifests/ \
+            --kubeconfig=/etc/kubernetes/worker-kubeconfig.yaml \
+            --tls-cert-file=/etc/kubernetes/ssl/worker.pem \
+            --tls-private-key-file=/etc/kubernetes/ssl/worker-key.pem
         Restart=always
-        Restart=on-failure
         RestartSec=10
         [Install]
         WantedBy=multi-user.target
@@ -78,6 +80,47 @@ write_files:
           command:
           - /hyperkube
           - proxy
-          - --master=http://<%= kube_master_ip %>:<%= kube_master_port %>
+          - --master=https://<%= kube_master_ip %>:<%= kube_master_secure_port %>
+          - --kubeconfig=/etc/kubernetes/worker-kubeconfig.yaml
+          - --proxy-mode=iptables
           securityContext:
             privileged: true
+          volumeMounts:
+            - mountPath: /etc/ssl/certs
+              name: "ssl-certs"
+            - mountPath: /etc/kubernetes/worker-kubeconfig.yaml
+              name: "kubeconfig"
+              readOnly: true
+            - mountPath: /etc/kubernetes/ssl
+              name: "etc-kube-ssl"
+              readOnly: true
+        volumes:
+          - name: "ssl-certs"
+            hostPath:
+              path: "/usr/share/ca-certificates"
+          - name: "kubeconfig"
+            hostPath:
+              path: "/etc/kubernetes/worker-kubeconfig.yaml"
+          - name: "etc-kube-ssl"
+            hostPath:
+              path: "/etc/kubernetes/ssl"
+
+  - path: /etc/kubernetes/worker-kubeconfig.yaml
+    content: |
+      apiVersion: v1
+      kind: Config
+      clusters:
+      - name: local
+        cluster:
+          certificate-authority: /etc/kubernetes/ssl/ca.pem
+      users:
+      - name: kubelet
+        user:
+          client-certificate: /etc/kubernetes/ssl/worker.pem
+          client-key: /etc/kubernetes/ssl/worker-key.pem
+      contexts:
+      - context:
+          cluster: local
+          user: kubelet
+        name: kubelet-context
+      current-context: kubelet-context
