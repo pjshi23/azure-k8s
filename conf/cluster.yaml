@@ -40,7 +40,7 @@ resources:
   
 # following settings are for kubernetes/coreos/flanneld/cert system components
 kubernetes:
-  version: v1.1.4
+  k8s_version: v1.2.3
   pod_cidr: 10.2.0.0/16
   service_cidr: 10.3.0.0/24
   api_service_ip: 10.3.0.1

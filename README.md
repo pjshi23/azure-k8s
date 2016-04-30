@@ -196,9 +196,17 @@ Note: The project is based on "https://github.com/kubernetes/kubernetes/tree/mas
         [https://github.com/coreos/flannel/issues/112]
     8. CoreOS VM on Azure drop network when overlay vxlan is under load 
         [https://github.com/coreos/bugs/issues/1156]
-        Currently fixed at v1010.1.0 (alpha release channel) 
-    9. TODO:
+        Currently fixed at v1010.1.0 (alpha release channel)
+    9.  TODO:
         (1) Kubernetes security enhancement
+            Per CoreOS document, it suggests secure inter-nodes communications.
+            -- The master/worker nodes have used certificates for authentication, as do service-accounts and user-accounts.
+            -- Authorization policy is also deployed for resource access control.
+            Due to our modified vulcand hasn't implemented secure ways to talk to api server, let kube-apiserver's insecure-bind-address=0.0.0.0 instead of 127.0.0.1 for now.
+            The external world won't be able to connect to api server via insecure port if we didn't expose that insecure endpoint of master host in Azure.
+            Note:
+            It's recommended to access the api server from a pod via a "kubectl proxy" sidecar container in the pod, however, websocket (used in our modified vulcand) doesn't work with kubectl proxy.
+            [https://github.com/kubernetes/kubernetes/issues/24482] & [https://github.com/kubernetes/kubernetes/issues/17032]
         (2) Use Azure DNS server instead of Infra2@lab
         (3) Kubernetes master HA
         (4) Azure Resource Manager Template with Scale Set

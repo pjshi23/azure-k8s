@@ -28,9 +28,9 @@ function create-tls-assets() {
     
     # create common worker kyepairs
     openssl genrsa -out ./credentials/${SVC_NAME}/worker/worker-key.pem 2048
-    openssl req -new -key ./credentials/${SVC_NAME}/worker/worker-key.pem -out ./credentials/worker.csr -subj "/CN=dummy-worker" -config ./output/worker-openssl.cnf
+    openssl req -new -key ./credentials/${SVC_NAME}/worker/worker-key.pem -out ./credentials/worker.csr -subj "/CN=kubelet" -config ./output/worker-openssl.cnf
     openssl x509 -req -in ./credentials/worker.csr -CA ./credentials/${SVC_NAME}/ca/ca.pem -CAkey ./credentials/${SVC_NAME}/ca/ca-key.pem -CAcreateserial -out ./credentials/${SVC_NAME}/worker/worker.pem -days 365 -extensions v3_req -extfile ./output/worker-openssl.cnf   
-    
+
     rm ./credentials/worker.csr
     rm ./credentials/apiserver.csr
     cp ./credentials/${SVC_NAME}/ca/ca.pem ./credentials/${SVC_NAME}/master/ 
