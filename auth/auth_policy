@@ -1,8 +1,11 @@
 {"apiVersion": "abac.authorization.kubernetes.io/v1beta1", "kind": "Policy", "spec": {"user":"system:serviceaccount:kube-system:default", "apiGroup":"*", "namespace":"*", "resource":"*" }}
 {"apiVersion": "abac.authorization.kubernetes.io/v1beta1", "kind": "Policy", "spec": {"user":"system:serviceaccount:default:default", "apiGroup":"*", "namespace":"default", "resource":"*" }}
 {"apiVersion": "abac.authorization.kubernetes.io/v1beta1", "kind": "Policy", "spec": {"user":"system:serviceaccount:develop:default", "apiGroup":"*", "namespace":"develop", "resource":"*" }}
+{"apiVersion": "abac.authorization.kubernetes.io/v1beta1", "kind": "Policy", "spec": {"user":"system:serviceaccount:develop:default", "apiGroup":"*", "namespace":"default", "resource":"*", "readonly": true }}
 {"apiVersion": "abac.authorization.kubernetes.io/v1beta1", "kind": "Policy", "spec": {"user":"system:serviceaccount:staging:default", "apiGroup":"*", "namespace":"staging", "resource":"*" }}
+{"apiVersion": "abac.authorization.kubernetes.io/v1beta1", "kind": "Policy", "spec": {"user":"system:serviceaccount:staging:default", "apiGroup":"*", "namespace":"default", "resource":"*","readonly": true }}
 {"apiVersion": "abac.authorization.kubernetes.io/v1beta1", "kind": "Policy", "spec": {"user":"system:serviceaccount:production:default", "apiGroup":"*", "namespace":"production", "resource":"*" }}
+{"apiVersion": "abac.authorization.kubernetes.io/v1beta1", "kind": "Policy", "spec": {"user":"system:serviceaccount:production:default", "apiGroup":"*", "namespace":"default", "resource":"*", "readonly": true }}
 {"apiVersion": "abac.authorization.kubernetes.io/v1beta1", "kind": "Policy", "spec": {"user":"*",         "apiGroup": "*", "nonResourcePath": "*", "readonly": true}}
 {"apiVersion": "abac.authorization.kubernetes.io/v1beta1", "kind": "Policy", "spec": {"user":"scheduler", "apiGroup": "*", "namespace": "*", "resource": "*" }}
 {"apiVersion": "abac.authorization.kubernetes.io/v1beta1", "kind": "Policy", "spec": {"user":"kubelet",   "apiGroup": "*", "namespace": "*", "resource": "*" }}

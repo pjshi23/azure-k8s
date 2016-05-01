@@ -1,4 +1,5 @@
 .DS_Store
+.srl
 output/*
 credentials/*
 node_modules/*
