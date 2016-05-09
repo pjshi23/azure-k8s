@@ -84,7 +84,7 @@
     "masterHostIP": "192.168.0.4",
     "masterHostname": "[concat(resourceGroup().name, '-master00')]",
     "workerHostnamePrefix": "[concat(resourceGroup().name, '-worker')]",
-    "imageSku": "Stable",
+    "imageSku": "Alpha",
     "vmStorageAccountContainerName": "vhds",
     "adminUserName": "core",
     "sshKeyPath": "[concat('/home/',variables('adminUsername'),'/.ssh/authorized_keys')]"

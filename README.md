@@ -23,14 +23,28 @@
 ### 4. Set Azure CLI to ARM mode
         Winstonteki-MacBook-Air:azure-k8s Winston$ azure config set mode arm
 
-### 5. Create a resource group
+### 5. Create the resource group
         Winstonteki-MacBook-Air:azure-k8s Winston$ azure group create -n armkube -l "West US"
 
-### 6. Validate resource group template
+### 6. Validate the resource group template
         Winstonteki-MacBook-Air:azure-k8s Winston$ azure group template validate -g armkube -f deployment/deployment-template.json -e deployment/deployment-template.parameters.json 
 
-### 7. Deploy the template
+### 7. Create the cluster
         Winstonteki-MacBook-Air:azure-k8s Winston$ azure group deployment create --debug-setting All -g armkube -f deployment/deployment-template.json -e deployment/deployment-template.parameters.json -n arm-kube-deployment
+
+### 8. Scale-up / Scale-down the cluster
+        Set a new value of parameter "numberOfNodes", and redeploy it again
+
+### 9. Shutdown the cluster
+        Winstonteki-MacBook-Air:azure-k8s Winston$ azure vmss deallocate -g armkube -n workerset --instance-ids "*"
+        Winstonteki-MacBook-Air:azure-k8s Winston$ azure vm deallocate -g armkube -n armkube-master00
+
+### 10. Start the cluster
+        Winstonteki-MacBook-Air:azure-k8s Winston$ azure vmss start -g armkube -n workerset --instance-ids "*"
+        Winstonteki-MacBook-Air:azure-k8s Winston$ azure vm start -g armkube -n armkube-master00
+
+### 11. Destroy the cluster
+        Winstonteki-MacBook-Air:azure-k8s Winston$ azure group delete -n armkube
 
 ### Notes:
     1. https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-linux-ssh-from-linux/
