@@ -1,0 +1,381 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "storageAccountName": {
+      "type": "string",
+      "defaultValue": "armk8sstorageaccount",
+      "minLength": 3,
+      "maxLength": 24,
+      "metadata": {
+        "description": "Name of the storage account for VM OS Disks"
+      }
+    },
+    "storageAccountType": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_GRS",
+        "Standard_ZRS",
+        "Premium_LRS",
+        "Standard_RAGRS"
+      ],
+      "metadata": {
+        "description": "Account type based on the storage redundancy requirements"
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_A2",
+      "allowedValues": [
+        "Standard_A1",
+        "Standard_A2",
+        "Standard_A3",
+        "Standard_A4"
+      ],
+      "metadata": {
+        "description": "Instance size for the VMs"
+      }
+    },
+    "numberOfNodes": {
+      "type": "int",
+      "defaultValue": 3,
+      "metadata": {
+        "description": "Number of compute nodes to create (3+ recommended)"
+      }
+    },
+    "sshKeyData": {
+      "type": "string",
+      "metadata": {
+        "description": "Public key for SSH authentication"
+      }
+    },
+    "masterCustomData": {
+      "type": "string",
+      "defaultValue": "#cloud-config\n\ncoreos:\n  update:\n    reboot-strategy: 'off'\n",
+      "metadata": {
+        "description": "String passed down to the Master Node VM."
+      }      
+    },
+    "workerCustomData": {
+      "type": "string",
+      "defaultValue": "#cloud-config\n\ncoreos:\n  update:\n    reboot-strategy: 'off'\n",
+      "metadata": {
+        "description": "String passed down to the Worker Node VM."
+      }           
+    }
+  },
+  "variables": {
+    "availabilitySetName": "availabilitySet1",
+    "publicIPName": "[concat(resourceGroup().name, 'PublicIP')]",
+    "publicIPAddressType": "Dynamic",
+    "vnetName": "[concat(resourceGroup().name, 'VNet')]",
+    "vnetCIDR": "192.168.0.0/16",
+    "subnet1Name": "master",
+    "subnet1CIDR": "192.168.0.0/24",
+    "subnet2Name": "worker",
+    "subnet2CIDR": "192.168.1.0/24",
+    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('vnetName'))]",
+    "subnet1ID": "[concat(variables('vnetID'),'/subnets/',variables('subnet1Name'))]",
+    "subnet2ID": "[concat(variables('vnetID'),'/subnets/',variables('subnet2Name'))]",
+    "masterSecurityGroupName": "masterSG",
+    "workerSecurityGroupName": "workerSG", 
+    "masterHostIP": "192.168.0.4",
+    "masterHostname": "[concat(resourceGroup().name, '-master00')]",
+    "workerHostnamePrefix": "[concat(resourceGroup().name, '-worker')]",
+    "imageSku": "Stable",
+    "vmStorageAccountContainerName": "vhds",
+    "adminUserName": "core",
+    "sshKeyPath": "[concat('/home/',variables('adminUsername'),'/.ssh/authorized_keys')]"
+  },
+  "resources": [
+    {
+      "apiVersion": "2015-06-15",      
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[parameters('storageAccountName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "accountType": "[parameters('storageAccountType')]"
+      }
+    },
+    {
+      "apiVersion": "2016-03-30",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('masterSecurityGroupName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "ssh",
+            "properties": {
+              "description": "ssh",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 123,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2016-03-30",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('workerSecurityGroupName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "ssh",
+            "properties": {
+              "description": "ssh",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 123,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },          
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('vnetName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('masterSecurityGroupName'))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('workerSecurityGroupName'))]"
+      ],      
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('vnetCIDR')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnet1Name')]",
+            "properties": {
+              "addressPrefix": "[variables('subnet1CIDR')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('masterSecurityGroupName'))]"
+              }            
+            }
+          },
+          {
+            "name": "[variables('subnet2Name')]",
+            "properties": {
+              "addressPrefix": "[variables('subnet2CIDR')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('workerSecurityGroupName'))]"
+              }
+            }
+          }          
+        ]
+      }
+    },
+    {
+      "apiVersion": "2016-03-30",      
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('publicIPName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+        "dnsSettings": {
+          "domainNameLabel": "[concat(resourceGroup().name, '-cluster')]"
+        }
+      }
+    },    
+    {
+      "apiVersion": "2016-03-30",      
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "masterNic",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('masterSecurityGroupName'))]"        
+      ],
+      "properties": {
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('masterSecurityGroupName'))]"
+        },
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[variables('masterHostIP')]",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIpAddresses', variables('publicIPName'))]"
+              },
+              "subnet": {
+                "id": "[variables('subnet1ID')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",      
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('masterHostname')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces', 'masterNic')]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('masterHostname')]",
+          "adminUsername": "[variables('adminUsername')]",
+          "customData": "[base64(parameters('masterCustomData'))]",          
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": true,
+            "ssh": {
+              "publicKeys": [
+                {
+                  "path": "[variables('sshKeyPath')]",
+                  "keyData": "[parameters('sshKeyData')]"
+                }
+              ]
+            }
+          }
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "CoreOS",
+            "offer": "CoreOS",
+            "sku": "[variables('imageSku')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[variables('masterHostname')]",
+            "vhd": {
+              "uri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/vhds/',variables('masterHostname'),'.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', 'masterNic')]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": true,
+            "storageUri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2016-03-30",      
+      "type": "Microsoft.Compute/virtualMachineScaleSets",
+      "name": "workerset",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
+      ],
+      "sku": {
+        "name": "[parameters('vmSize')]",
+        "tier": "Standard",
+        "capacity": "[parameters('numberOfNodes')]"
+      },
+      "properties": {
+        "overprovision": true,
+        "upgradePolicy": {
+          "mode": "Manual"
+        },
+        "virtualMachineProfile": {
+          "osProfile": {
+            "computerNamePrefix": "[variables('workerHostnamePrefix')]",
+            "adminUsername": "[variables('adminUsername')]",
+            "customData": "[base64(parameters('workerCustomData'))]",
+            "linuxConfiguration": {
+              "disablePasswordAuthentication": true,
+              "ssh": {
+                "publicKeys": [
+                  {
+                    "path": "[variables('sshKeyPath')]",
+                    "keyData": "[parameters('sshKeyData')]"
+                  }
+                ]
+              }
+            }
+          },
+          "storageProfile": {
+            "osDisk": {
+              "name": "[variables('workerHostnamePrefix')]",              
+              "vhdContainers": [
+                "[concat('https://', parameters('storageAccountName'), '.blob.core.windows.net/', variables('vmStorageAccountContainerName'))]"
+              ],
+              "caching": "ReadOnly",
+              "createOption": "FromImage"
+            },
+            "imageReference": {
+              "publisher": "CoreOS",
+              "offer": "CoreOS",
+              "sku": "[variables('imageSku')]",
+              "version": "latest"
+            }
+          },          
+          "networkProfile": {          
+            "networkInterfaceConfigurations": [
+              {
+                "name": "nicconfig1",
+                "properties": {
+                  "primary": true,
+                  "ipConfigurations": [
+                    {
+                      "name": "ipconfig1",
+                      "networkSecurityGroup": {
+                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('workerSecurityGroupName'))]"
+                      },                        
+                      "properties": {
+                        "subnet": {
+                          "id": "[concat('/subscriptions/', subscription().subscriptionId,'/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/virtualNetworks/', variables('vnetName'), '/subnets/', variables('subnet2Name'))]"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "diagnosticsProfile": {
+            "bootDiagnostics": {
+              "enabled": true,
+              "storageUri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net')]"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "masterURL": {
+      "value": "[reference(variables('publicIPName')).dnsSettings.fqdn]",
+      "type": "string"
+    }
+  }
+}
