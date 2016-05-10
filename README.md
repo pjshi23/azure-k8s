@@ -33,7 +33,12 @@
         Winstonteki-MacBook-Air:azure-k8s Winston$ azure group deployment create --debug-setting All -g armkube -f deployment/deployment-template.json -e deployment/deployment-template.parameters.json -n arm-kube-deployment
 
 ### 8. Scale-up / Scale-down the cluster
-        Set a new value of parameter "numberOfNodes", and redeploy it again
+        For example, expand/shrink to 3 nodes:
+        Winstonteki-MacBook-Air:azure-k8s Winston$ azure group deployment create --debug-setting All -g armkube -f deployment/scaling-template.json -n arm-kube-deployment
+            info:    Executing command group deployment create
+            info:    Supply values for the following parameters
+            vmSize: Standard_A2
+            numberOfNodes: 3
 
 ### 9. Shutdown the cluster
         Winstonteki-MacBook-Air:azure-k8s Winston$ azure vmss deallocate -g armkube -n workerset --instance-ids "*"
