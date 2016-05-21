@@ -4,7 +4,7 @@
   "parameters": {
     "storageAccountName": {
       "type": "string",
-      "defaultValue": "armk8sstorageaccount",
+      "defaultValue": "<%= storage_account %>",
       "minLength": 3,
       "maxLength": 24,
       "metadata": {
@@ -25,9 +25,22 @@
         "description": "Account type based on the storage redundancy requirements"
       }
     },
-    "vmSize": {
+    "masterVMSize": {
       "type": "string",
-      "defaultValue": "Standard_A2",
+      "defaultValue": "<%= master_instance_type %>",
+      "allowedValues": [
+        "Standard_A1",
+        "Standard_A2",
+        "Standard_A3",
+        "Standard_A4"
+      ],
+      "metadata": {
+        "description": "Instance size for the VMs"
+      }
+    },    
+    "workerVMSize": {
+      "type": "string",
+      "defaultValue": "<%= worker_instance_type %>",
       "allowedValues": [
         "Standard_A1",
         "Standard_A2",
@@ -40,13 +53,14 @@
     },
     "numberOfNodes": {
       "type": "int",
-      "defaultValue": 3,
+      "defaultValue": 1,
       "metadata": {
         "description": "Number of compute nodes to create (3+ recommended)"
       }
     },
     "sshKeyData": {
       "type": "string",
+      "defaultValue": "",
       "metadata": {
         "description": "Public key for SSH authentication"
       }
@@ -67,24 +81,26 @@
     }
   },
   "variables": {
+    "vnetCIDR": "<%= vnet_cidr %>",
+    "subnet1Name": "<%= subnet1_name %>",
+    "subnet1CIDR": "<%= subnet1_cidr %>",
+    "subnet2Name": "<%= subnet2_name %>",
+    "subnet2CIDR": "<%= subnet2_cidr %>",
+    "masterHostIP": "<%= master_ip %>",
+    "imageSku": "stable",
+    "imageVersion": "899.13.0",
+    "configNote": "=== Please fill cluster configuration in above variables ===",
     "availabilitySetName": "availabilitySet1",
     "publicIPName": "[concat(resourceGroup().name, 'PublicIP')]",
     "publicIPAddressType": "Dynamic",
     "vnetName": "[concat(resourceGroup().name, 'VNet')]",
-    "vnetCIDR": "192.168.0.0/16",
-    "subnet1Name": "master",
-    "subnet1CIDR": "192.168.0.0/24",
-    "subnet2Name": "worker",
-    "subnet2CIDR": "192.168.1.0/24",
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('vnetName'))]",
     "subnet1ID": "[concat(variables('vnetID'),'/subnets/',variables('subnet1Name'))]",
     "subnet2ID": "[concat(variables('vnetID'),'/subnets/',variables('subnet2Name'))]",
     "masterSecurityGroupName": "masterSG",
     "workerSecurityGroupName": "workerSG", 
-    "masterHostIP": "192.168.0.4",
     "masterHostname": "[concat(resourceGroup().name, '-master00')]",
     "workerHostnamePrefix": "[concat(resourceGroup().name, '-worker')]",
-    "imageSku": "Alpha",
     "vmStorageAccountContainerName": "vhds",
     "adminUserName": "core",
     "sshKeyPath": "[concat('/home/',variables('adminUsername'),'/.ssh/authorized_keys')]"
@@ -238,7 +254,7 @@
       ],
       "properties": {
         "hardwareProfile": {
-          "vmSize": "[parameters('vmSize')]"
+          "vmSize": "[parameters('masterVMSize')]"
         },
         "osProfile": {
           "computerName": "[variables('masterHostname')]",
@@ -261,7 +277,7 @@
             "publisher": "CoreOS",
             "offer": "CoreOS",
             "sku": "[variables('imageSku')]",
-            "version": "latest"
+            "version": "[variables('imageVersion')]"
           },
           "osDisk": {
             "name": "[variables('masterHostname')]",
@@ -297,7 +313,7 @@
         "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
       ],
       "sku": {
-        "name": "[parameters('vmSize')]",
+        "name": "[parameters('workerVMSize')]",
         "tier": "Standard",
         "capacity": "[parameters('numberOfNodes')]"
       },
@@ -336,7 +352,7 @@
               "publisher": "CoreOS",
               "offer": "CoreOS",
               "sku": "[variables('imageSku')]",
-              "version": "latest"
+              "version": "[variables('imageVersion')]"
             }
           },          
           "networkProfile": {          

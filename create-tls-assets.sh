@@ -17,6 +17,9 @@ function create-tls-assets() {
 
     mkdir -p ./credentials/${SVC_NAME}/{ca,master,worker,user}
 
+    # create ssh keypair
+    ssh-keygen -t rsa -b 2048 -N '' -f ./credentials/${SVC_NAME}/${SVC_NAME}_ssh
+
     # create a cluster root ca
     openssl genrsa -out ./credentials/${SVC_NAME}/ca/ca-key.pem 2048
     openssl req -x509 -new -nodes -key ./credentials/${SVC_NAME}/ca/ca-key.pem -days 10000 -out ./credentials/${SVC_NAME}/ca/ca.pem -subj "/CN=${SVC_NAME}-ca"

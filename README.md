@@ -24,32 +24,49 @@
         Winstonteki-MacBook-Air:azure-k8s Winston$ azure config set mode arm
 
 ### 5. Create the resource group
-        Winstonteki-MacBook-Air:azure-k8s Winston$ azure group create -n armkube -l "West US"
+        Winstonteki-MacBook-Air:azure-k8s Winston$ azure group create -n kube -l "West US"
 
-### 6. Validate the resource group template
-        Winstonteki-MacBook-Air:azure-k8s Winston$ azure group template validate -g armkube -f deployment/deployment-template.json -e deployment/deployment-template.parameters.json 
+### 6. Create cluster template file
+        Edit cluster configuration file (./conf/arm_cluster.yaml)
+        Winstonteki-MacBook-Air:azure-k8s Winston$ ./create-kubernetes-cluster-template.js
 
-### 7. Create the cluster
-        Winstonteki-MacBook-Air:azure-k8s Winston$ azure group deployment create --debug-setting All -g armkube -f deployment/deployment-template.json -e deployment/deployment-template.parameters.json -n arm-kube-deployment
+### 7. Validate the resource group template
+        Winstonteki-MacBook-Air:azure-k8s Winston$ azure group template validate -g kube -f output/kube_deployment.json
 
-### 8. Scale-up / Scale-down the cluster
+### 8. Create the cluster via template file
+        Winstonteki-MacBook-Air:azure-k8s Winston$ azure group deployment create --debug-setting All -g kube -f output/kube_deployment.json -n kube-deployment
+
+### 9. Check cluster status
+        Winstonteki-MacBook-Air:azure-k8s Winston$ kubectl get nodes
+        Winstonteki-MacBook-Air:azure-k8s Winston$ kubectl get namespaces
+        Winstonteki-MacBook-Air:azure-k8s Winston$ kubectl get services --all-namespaces
+        Winstonteki-MacBook-Air:azure-k8s Winston$ kubectl get pods --all-namespaces
+
+### 10. SSH to each VM to check status if needed
+        (1) Winstonteki-MacBook-Air:azure-k8s Winston$ ssh-add ./credentials/kube/kube_ssh
+        // ssh to master
+        (2) Winstonteki-MacBook-Air:azure-k8s Winston$ ssh -A core@kube-cluster.westus.cloudapp.azure.com  
+        // ssh to worker through master
+        (3) core@kube-master00 ~ $ ssh -A core@kube-worker000000
+
+### 11. Scale-up / Scale-down the cluster
         For example, expand/shrink to 3 nodes:
-        Winstonteki-MacBook-Air:azure-k8s Winston$ azure group deployment create --debug-setting All -g armkube -f deployment/scaling-template.json -n arm-kube-deployment
+        Winstonteki-MacBook-Air:azure-k8s Winston$  azure group deployment create --debug-setting All -g kube -f output/kube_scaling.json -n kube-deployment
             info:    Executing command group deployment create
             info:    Supply values for the following parameters
-            vmSize: Standard_A2
+            workerVMSize: Standard_A2
             numberOfNodes: 3
 
-### 9. Shutdown the cluster
-        Winstonteki-MacBook-Air:azure-k8s Winston$ azure vmss deallocate -g armkube -n workerset --instance-ids "*"
-        Winstonteki-MacBook-Air:azure-k8s Winston$ azure vm deallocate -g armkube -n armkube-master00
+### 12. Shutdown the cluster
+        Winstonteki-MacBook-Air:azure-k8s Winston$ azure vmss deallocate -g kube -n workerset --instance-ids "*"
+        Winstonteki-MacBook-Air:azure-k8s Winston$ azure vm deallocate -g kube -n kube-master00
 
-### 10. Start the cluster
-        Winstonteki-MacBook-Air:azure-k8s Winston$ azure vmss start -g armkube -n workerset --instance-ids "*"
-        Winstonteki-MacBook-Air:azure-k8s Winston$ azure vm start -g armkube -n armkube-master00
+### 13. Start the cluster
+        Winstonteki-MacBook-Air:azure-k8s Winston$ azure vm start -g kube -n kube-master00
+        Winstonteki-MacBook-Air:azure-k8s Winston$ azure vmss start -g kube -n workerset --instance-ids "*"
 
-### 11. Destroy the cluster
-        Winstonteki-MacBook-Air:azure-k8s Winston$ azure group delete -n armkube
+### 14. Destroy the cluster
+        Winstonteki-MacBook-Air:azure-k8s Winston$ azure group delete -n kube
 
 ### Notes:
     1. https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-linux-ssh-from-linux/
