@@ -1,0 +1,67 @@
+# common settings internally referred by resources and kubernetes
+variables:
+  resourcegroup_name: kube
+  location: westus
+  master_hostip: 192.168.0.4
+
+cluster_name: <%= resourcegroup_name %>
+
+coreos_image_version: 
+  stable: 899.13.0 
+  beta: 991.2.0
+  alpha: 1010.1.0
+  selected_channel: alpha
+
+resources:
+  master_count: 1
+  worker_count: 2
+  master_instance_type: Standard_A2
+  worker_instance_type: Standard_A2
+  vnet_cidr: "192.168.0.0/16"
+  subnet1_name: master
+  subnet1_cidr: "192.168.0.0/24"
+  subnet2_name: worker
+  subnet2_cidr: "192.168.1.0/24"  
+  master_hostname: <%= resourcegroup_name %>-master00
+  master_ip: <%= master_hostip %>
+  expose_ports: 
+    - 3443
+    - 8080
+    - 3000
+    - 4040
+    - 6066
+# rules of masterSG
+  storage_account: <%= resourcegroup_name %>storageaccount
+  
+# following settings are for kubernetes/coreos/flanneld/cert system components
+kubernetes:
+  k8s_version: v1.2.3
+  pod_cidr: 10.2.0.0/16
+  service_cidr: 10.3.0.0/24
+  api_service_ip: 10.3.0.1
+  dns_service_ip: 10.3.0.10
+  kube_master_hostname: <%= resourcegroup_name %>-master00
+  kube_master_ip: <%= master_hostip %>
+  kube_master_port: 3080
+  kube_master_secure_port: 3443  
+  kube_service_fqdn: <%= resourcegroup_name %>-cluster.<%= location %>.cloudapp.azure.com
+
+# refer to kubernetes section for various certificates
+credentials:
+  ca_name: <%= resourcegroup_name %>
+  master_alt_names:
+    - DNS.1 = kubernetes
+    - DNS.2 = kubernetes.default
+    - DNS.3 = kubernetes.default.svc
+    - DNS.4 = kubernetes.default.svc.cluster.local
+    - DNS.5 = <%= resourcegroup_name %>-cluster.<%= location %>.cloudapp.azure.com
+    - DNS.6 = <%= resourcegroup_name %>-master00
+    - IP.1 = 10.3.0.1
+    - IP.2 = <%= master_hostip %>
+  worker_alt_names:
+    - DNS.1 = *.<%= resourcegroup_name %>-cluster.dx.internal.cloudapp.net
+    - DNS.2 = *.dx.internal.cloudapp.net
+    - DNS.3 = *.*.internal.cloudapp.net
+    - DNS.4 = *.*.*.internal.cloudapp.net
+    
+# *.dx.internal.cloudapp.net    
