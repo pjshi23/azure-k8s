@@ -87,6 +87,8 @@
     "subnet2Name": "<%= subnet2_name %>",
     "subnet2CIDR": "<%= subnet2_cidr %>",
     "masterHostIP": "<%= master_ip %>",
+    "masterHostname": "<%= master_hostname %>",
+    "workerHostnamePrefix": "<%= cluster_name %>-worker",
     "imageSku": "stable",
     "imageVersion": "899.13.0",
     "configNote": "=== Please fill cluster configuration in above variables ===",
@@ -99,8 +101,6 @@
     "subnet2ID": "[concat(variables('vnetID'),'/subnets/',variables('subnet2Name'))]",
     "masterSecurityGroupName": "masterSG",
     "workerSecurityGroupName": "workerSG", 
-    "masterHostname": "[concat(resourceGroup().name, '-master00')]",
-    "workerHostnamePrefix": "[concat(resourceGroup().name, '-worker')]",
     "vmStorageAccountContainerName": "vhds",
     "adminUserName": "core",
     "sshKeyPath": "[concat('/home/',variables('adminUsername'),'/.ssh/authorized_keys')]"
