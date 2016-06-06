@@ -86,7 +86,7 @@
     "subnet1CIDR": "<%= subnet1_cidr %>",
     "subnet2Name": "<%= subnet2_name %>",
     "subnet2CIDR": "<%= subnet2_cidr %>",
-    "masterHostIP": "<%= master_ip %>",
+    "masterHostIP": "<%= master_hostip %>",
     "masterHostname": "<%= master_hostname %>",
     "workerHostnamePrefix": "<%= cluster_name %>-worker",
     "imageSku": "stable",

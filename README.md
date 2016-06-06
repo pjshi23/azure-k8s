@@ -9,9 +9,9 @@
 
 ### 2. Setup cluster configuration:
     cluster configuration is specified in conf/arm_cluster.yaml
-    (1) resourcegroup_name must be unique for each cluster
+    (1) cluster_name must be unique for each cluster
     (2) location is lower-cased without whitespace
-    (3) master_hostip must be within vnet address space
+    (3) master_hostip must be within vnet's subnet1_cidr
 
 ### 3. Login to Azure:		
         Winstonteki-MacBook-Air:azure-k8s Winston$ azure login
